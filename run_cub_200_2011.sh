@@ -6,7 +6,7 @@ python main.py \
 --epochs 50 \
 --num_descriptive 10 \
 --num_prototypes 202 \
---results ./results-06-05-2023 \
+--results ./results \
 --earlyStopping 12 \
 --use_scheduler \
 --arch resnet50 \
