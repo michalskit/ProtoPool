@@ -18,30 +18,22 @@ To run the code in this repository, follow these steps:
 
 1. Create a new conda environment using the provided `environment.yml` file:
 <pre>
-```
 conda env create -f environment.yml
-```
 </pre>
 
 2. Activate the new conda environment:
 <pre>
-```
 conda activate proto_pool
-```
 </pre>
 
 3. Give execute permissions to the shell script:
 <pre>
-```
 chmod +x run_cub_200_2011.sh
-```
 </pre>
 
 4. Run the shell script:
 <pre>
-```
 ./run_cub_200_2011.sh
-```
 </pre>
 
 ## Original README
