@@ -23,6 +23,6 @@ python main.py \
 --pp_gumbel \
 --gumbel_time 30 \
 --inat \
---data_train /home/robin/data/cub200_cropped/train_cropped_augmented/ \
---data_push /home/robin/data/cub200_cropped/train_cropped/ \
---data_test /home/robin/data/cub200_cropped/test_cropped/
+--data_train /home/robin/d/CUB_200_2011/train_cropped_augmented/ \
+--data_push /home/robin/d/CUB_200_2011/train_cropped/ \
+--data_test /home/robin/d/CUB_200_2011/test_cropped/
