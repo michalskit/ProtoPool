@@ -1,0 +1,28 @@
+python main.py \
+--data_type birds \
+--num_classes 100 \
+--batch_size 80 \
+--lr 0.0005 \
+--epochs 50 \
+--num_descriptive 10 \
+--num_prototypes 202 \
+--results ./results_analysis \
+--earlyStopping 12 \
+--use_scheduler \
+--arch resnet50 \
+--pretrained \
+--proto_depth 256 \
+--warmup_time 10 \
+--warmup \
+--prototype_activation_function log \
+--top_n_weight 0 \
+--last_layer \
+--use_thresh \
+--mixup_data \
+--pp_ortho \
+--pp_gumbel \
+--gumbel_time 30 \
+--inat \
+--data_train /home/robin/d/CUB_200_2011/train_cropped_augmented_in/ \
+--data_push /home/robin/d/CUB_200_2011/train_cropped_in/ \
+--data_test /home/robin/d/CUB_200_2011/test_cropped_in/
