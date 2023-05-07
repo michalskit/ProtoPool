@@ -159,6 +159,10 @@ class PrototypeChooser(nn.Module):
                                                    distances.size()[3])).squeeze()  # [b, p]
         avg_dist = F.avg_pool2d(distances, kernel_size=(distances.size()[2],
                                                         distances.size()[3])).squeeze()  # [b, p]
+        # for analysis:
+        x_activation = self.distance_2_similarity(min_distances)
+        x_activation_avg = self.distance_2_similarity(avg_dist)
+
         min_mixed_distances = self._mix_l2_convolution(min_distances, proto_presence)  # [b, c, n]
         avg_mixed_distances = self._mix_l2_convolution(avg_dist, proto_presence)  # [b, c, n]
         x = self.distance_2_similarity(min_mixed_distances)  # [b, c, n]
@@ -169,7 +173,7 @@ class PrototypeChooser(nn.Module):
             x = self.last_layer(x.flatten(start_dim=1))
         else:
             x = x.sum(dim=-1)
-        return x, min_distances, proto_presence  # [b,c,n] [b, p] [c, p, n]
+        return x, min_distances, proto_presence, (x_activation, x_activation_avg)  # [b,c,n] [b, p] [c, p, n]
 
     def _l2_convolution(self, x):
         '''
