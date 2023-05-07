@@ -305,7 +305,7 @@ def learn_model(opt: Optional[List[str]]) -> None:
                             data, label, 0.5)
 
                     # ===================forward=====================
-                    prob, min_distances, proto_presence = model_multi(
+                    prob, min_distances, proto_presence, _ = model_multi(
                         data, gumbel_scale=gumbel_scalar)
                     np.savez_compressed(f'{dir_checkpoint}/pp_{epoch * 80 + i}.pth', proto_presence.detach().cpu().numpy())
 
@@ -388,7 +388,7 @@ def learn_model(opt: Optional[List[str]]) -> None:
 
                     # ===================forward=====================
 
-                    prob, min_distances, proto_presence = model_multi(data, gumbel_scale=gumbel_scalar)
+                    prob, min_distances, proto_presence, _ = model_multi(data, gumbel_scale=gumbel_scalar)
 
                     loss = criterion(prob, label)
                     entropy_loss = loss
@@ -486,7 +486,7 @@ def learn_model(opt: Optional[List[str]]) -> None:
             label = label.to(device)
 
             # ===================forward=====================
-            prob, min_distances, proto_presence = model_multi(data, gumbel_scale=10e3)
+            prob, min_distances, proto_presence, _ = model_multi(data, gumbel_scale=10e3)
 
             loss = criterion(prob, label)
             entropy_loss = loss
@@ -566,7 +566,7 @@ def learn_model(opt: Optional[List[str]]) -> None:
                 data, targets_a, targets_b, lam = mixup_data(data, label, 0.5)
 
             # ===================forward=====================
-            prob, min_distances, proto_presence = model_multi(data, gumbel_scale=10e3)
+            prob, min_distances, proto_presence, _ = model_multi(data, gumbel_scale=10e3)
 
             if args.mixup_data:
                 entropy_loss = lam * \
@@ -604,7 +604,7 @@ def learn_model(opt: Optional[List[str]]) -> None:
                 label = label.to(device)
 
                 # ===================forward=====================
-                prob, min_distances, proto_presence = model_multi(data, gumbel_scale=10e3)
+                prob, min_distances, proto_presence, _ = model_multi(data, gumbel_scale=10e3)
 
                 loss = criterion(prob, label)
                 entropy_loss = loss
