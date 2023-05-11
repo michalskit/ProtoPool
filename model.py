@@ -177,6 +177,11 @@ class PrototypeChooser(nn.Module):
 
     def _l2_convolution(self, x):
         '''
+        The _l2_convolution method calculates the squared Euclidean distances 
+        between the input feature maps x and the prototype vectors using convolution.
+        It returns distances of shape [80, 202, 7, 7].
+        They are ||z-p||^2 in the equation for g_p(z) in the paper.
+
         apply self.prototype_vectors as l2-convolution filters on input x
         '''
         x2 = x ** 2
