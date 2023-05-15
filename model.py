@@ -133,9 +133,17 @@ class PrototypeChooser(nn.Module):
             p.requires_grad = True
 
     def conv_features(self, x):
-        '''
-        the feature input to prototype layer
-        '''
+        """
+        This method is used to generate the convolutional features of the input tensor, 
+        which are then passed to the prototype layer.
+
+        Parameters:
+        x (torch.Tensor): The input tensor to the network. 
+        This is a batch of images with dimensions [batch_size, channels, height, width].
+
+        Returns:
+        torch.Tensor: The transformed input tensor after applying the feature extractor and additional layers.
+        """
         x = self.features(x)
         x = self.add_on_layers(x)
         return x
@@ -159,6 +167,7 @@ class PrototypeChooser(nn.Module):
                                                    distances.size()[3])).squeeze()  # [b, p]
         avg_dist = F.avg_pool2d(distances, kernel_size=(distances.size()[2],
                                                         distances.size()[3])).squeeze()  # [b, p]
+        
         # for analysis:
         x_activation = self.distance_2_similarity(min_distances)
         x_activation_avg = self.distance_2_similarity(avg_dist)
@@ -211,9 +220,24 @@ class PrototypeChooser(nn.Module):
         return mixed_distances  # [b, c, n]
 
     def prototype_distances(self, x):
-        '''
-        x is the raw input
-        '''
+        """
+        This method is used to calculate the squared Euclidean distances 
+        between the convolutional features of the input tensor and the prototype vectors. 
+        The process involves passing the input tensor through the network to extract its features, 
+        and then calculating the L2 distance between these features and the prototypes.
+
+        The purpose of this method is to determine how similar the input tensor is to each of the prototypes. 
+        This can be used to classify the input based on its closeness to the different prototypes.
+
+        Parameters:
+        x (torch.Tensor): The raw input tensor to the network. 
+        This is a batch of images with dimensions [batch_size, channels, height, width].
+
+        Returns:
+        torch.Tensor: A tensor representing the squared Euclidean distances 
+        between the convolutional features of the input and the prototype vectors. 
+        The dimensions of the output tensor are [batch_size, num_prototypes, height, width].
+        """
         conv_features = self.conv_features(x)
         distances = self._l2_convolution(conv_features)  # [b, p, h, w]
         return distances  # [b, n, h, w], [b, p, h, w]
