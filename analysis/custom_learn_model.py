@@ -13,27 +13,6 @@ def adjust_learning_rate(optimizer, rate):
     for param_group in optimizer.param_groups:
         param_group['lr'] *= rate
 
-def set_trainable_attr(m, b=True):
-    for p in m.parameters(): p.requires_grad = b
-
-def unfreeze(model, l):
-    features = list(model.features.named_children())
-    set_trainable_attr(features[l][1])
-
-def freeze_all_but_last_layer(model):
-    for param in model.features.parameters():
-        param.requires_grad = False
-
-def unfreeze_three_layers(model):
-    unfreeze(model, 7)
-    unfreeze(model, 6)
-    unfreeze(model, 5)
-
-def unfreeze_three_more(model):
-    unfreeze(model, 4)
-    unfreeze(model, 3)
-    unfreeze(model,2)
-
 def save_model(model, path, epoch):
     torch.save({
         'model_state_dict': model.state_dict(),
@@ -105,15 +84,13 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
     for epoch in epoch_tqdm:
 
         if epoch == 0:
-            freeze_all_but_last_layer(model)
+            for param in model.features.parameters():
+                param.requires_grad = False
             print('\nFreezing all but last layer\n')
         elif epoch == 10:
-            unfreeze_three_layers(model)
-            print('\nUnfreezing 3 layers from the end\n')
-        elif epoch == 30:
-            print('\nUnfreezing three more layers\n')
-            unfreeze_three_more(model)
-
+            for param in model.parameters():
+                param.requires_grad = True
+            print('\nUnfreezing all layers\n')
 
         if epoch < 10:
             optimizer = optimizer_last_layer
