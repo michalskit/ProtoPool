@@ -33,7 +33,7 @@ class Resnet50iNaturalist(nn.Module):
         
 
     def forward(self, x):
-        x = self.features(x)
-        x = self.last_layer(x)
-        return x
+        features = self.features(x)
+        x = self.last_layer(features)
+        return x, features
     

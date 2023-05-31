@@ -136,7 +136,7 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
             images = images.to(device)
             labels = labels.to(device)
 
-            outputs = model(images)
+            outputs, _ = model(images)
             loss = criterion(outputs, labels) # + l1 norm ?
             
             optimizer.zero_grad()
@@ -150,17 +150,14 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
             correct += predicted.eq(labels).sum().item()
 
 
-            writer.add_scalar('train/batch_loss', train_loss,
-                        epoch * len(train_loader) + i)
-
         if epoch >= 10:
             lr_scheduler.step()
 
         train_epoch_loss = train_loss / len(train_loader.dataset)
-        train_epoch_acc = 100 * correct / total
-        print(f'Train Loss: {train_epoch_loss:.4f}, Acc: {train_epoch_acc:.2f}%')
+        train_epoch_acc = correct / total
+        print(f'Train Loss: {train_epoch_loss:.4f}, Acc: {train_epoch_acc:.2f}')
 
-        writer.add_scalar('train/loss', train_loss,
+        writer.add_scalar('train/entropy', train_loss,
                         epoch)
         writer.add_scalar('train/acc', train_epoch_acc,
                         epoch)
@@ -172,21 +169,21 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
         total = 0
 
         for images, labels in test_loader:
-            inputs, labels = images.to(device), labels.to(device)
+            images, labels = images.to(device), labels.to(device)
             with torch.no_grad():
-                outputs = model(inputs)
+                outputs, _ = model(images)
                 loss = criterion(outputs, labels)
                 _, predicted = torch.max(outputs, 1)
 
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-            test_loss += loss.item() * inputs.size(0)
+            test_loss += loss.item() * images.size(0)
 
         test_epoch_loss = test_loss / len(test_loader.dataset)
-        test_epoch_acc = 100 * correct / total
-        print(f'Test  Loss: {test_epoch_loss:.4f}, Acc: {test_epoch_acc:.2f}%')
+        test_epoch_acc = correct / total
+        print(f'Test  Loss: {test_epoch_loss:.4f}, Acc: {test_epoch_acc:.2f}')
 
-        writer.add_scalar('test/loss', test_epoch_loss, epoch)
+        writer.add_scalar('test/entropy', test_epoch_loss, epoch)
         writer.add_scalar('test/acc', test_epoch_acc, epoch)
         
         if (test_epoch_acc > best_test_accuracy) or (test_epoch_loss < best_test_loss):
