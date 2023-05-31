@@ -19,12 +19,13 @@ def save_model(model, path, epoch):
         'epoch': epoch
     }, path)
 
-def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
+def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False, dropout=None):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'\033[0;1;31m{device=}\033[0m')
+    print(f'\033[0;1;32m{dropout=}\033[0m')
 
-    model = Resnet50iNaturalist(num_classes=100)
+    model = Resnet50iNaturalist(num_classes=100, dropout=dropout)
     model.to(device)
 
     # Load the datasets
@@ -53,13 +54,10 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
     optimizer_last_layer = torch.optim.Adam(
         [{'params': model.last_layer.parameters(), 'lr': 3 * lr, 'weight_decay': 1e-3}])
 
-    optimizer_three_layers = torch.optim.Adam(
-        [{'params': model.features.parameters(), 'lr': lr / 10, 'weight_decay': 1e-3},
-        {'params': model.last_layer.parameters(), 'lr': 3 * lr, 'weight_decay': 1e-3}])
-
     optimizer_all_layers = torch.optim.Adam(
         [{'params': model.features.parameters(), 'lr': lr / 10, 'weight_decay': 1e-3},
         {'params': model.last_layer.parameters(), 'lr': 3 * lr, 'weight_decay': 1e-3}])
+
 
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -87,17 +85,11 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
             for param in model.features.parameters():
                 param.requires_grad = False
             print('\nFreezing all but last layer\n')
+            optimizer = optimizer_last_layer
         elif epoch == 10:
             for param in model.parameters():
                 param.requires_grad = True
             print('\nUnfreezing all layers\n')
-
-        if epoch < 10:
-            optimizer = optimizer_last_layer
-        elif epoch < 30:
-            optimizer = optimizer_three_layers
-            lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
-        else:
             optimizer = optimizer_all_layers
             lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 
@@ -126,22 +118,27 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
             total += labels.size(0)
             correct += predicted.eq(labels).sum().item()
 
+            writer.add_scalar('train/loss', loss.item(), epoch)
+
 
         if epoch >= 10:
             lr_scheduler.step()
 
-        train_epoch_loss = train_loss / len(train_loader.dataset)
-        train_epoch_acc = correct / total
-        print(f'Train Loss: {train_epoch_loss:.4f}, Acc: {train_epoch_acc:.2f}')
+        train_loss = train_loss / len(train_loader)
+        train_acc = correct / total
+        print(f'Train Loss: {train_loss:.4f}, Acc: {train_acc:.2f}')
 
-        writer.add_scalar('train/entropy', train_loss,
-                        epoch)
-        writer.add_scalar('train/acc', train_epoch_acc,
-                        epoch)
 
+        writer.add_scalar('train/acc', train_acc, epoch)
+        if epoch < 10:
+            writer.add_scalar('train/lr_last_layer', optimizer.param_groups[0]['lr'], epoch)
+        else:
+            writer.add_scalar('train/lr_last_layer', optimizer.param_groups[1]['lr'], epoch)
+            writer.add_scalar('train/lr_features', optimizer.param_groups[0]['lr'], epoch)
+        
         # Validation phase
         model.eval()
-        test_loss = 0.0
+        test_loss = np.zeros((100, 1))
         correct = 0
         total = 0
 
@@ -154,19 +151,21 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
 
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-            test_loss += loss.item() * images.size(0)
+            test_loss += loss.item()
 
-        test_epoch_loss = test_loss / len(test_loader.dataset)
+        test_loss /= len(test_loader)
         test_epoch_acc = correct / total
-        print(f'Test  Loss: {test_epoch_loss:.4f}, Acc: {test_epoch_acc:.2f}')
 
-        writer.add_scalar('test/entropy', test_epoch_loss, epoch)
+        test_loss = test_loss.mean()
+        print(f'Test  Loss: {test_loss.mean():.4f}, Acc: {test_epoch_acc:.2f}')
+
+        writer.add_scalar('test/loss', test_loss.mean(), epoch)
         writer.add_scalar('test/acc', test_epoch_acc, epoch)
         
-        if (test_epoch_acc > best_test_accuracy) or (test_epoch_loss < best_test_loss):
+        if (test_epoch_acc > best_test_accuracy) or (test_loss.mean() < best_test_loss):
             loss_not_improved_for_epochs = 0
-            if test_epoch_loss < best_test_loss:
-                best_test_loss = test_epoch_loss
+            if test_loss.mean() < best_test_loss:
+                best_test_loss = test_loss.mean()
             # save the best model
             if test_epoch_acc > best_test_accuracy:
                 best_test_accuracy = test_epoch_acc
@@ -175,6 +174,7 @@ def custom_learn_model(lr=0.0005, num_epochs = 50, in_dev_mode=False):
             loss_not_improved_for_epochs += 1
 
         if loss_not_improved_for_epochs >= 5:
+            print('\033[0;31m Loss not improved over the last 5 epoch. Decreasing learning rate.\033[0m')
             adjust_learning_rate(optimizer, 0.95)
 
         # I don't use early stopping
